@@ -61,8 +61,6 @@
                 file:
                   path: "{{ lock_dir }}"
                   state: absent
-                become: yes
-                become_method: sudo
 
               - name: Sleep for {{ wait_processes_rm_lock_file }} seconds for all waiting processes to make the file absent, May need to increase this
                 wait_for:
