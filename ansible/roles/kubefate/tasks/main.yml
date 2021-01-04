@@ -83,11 +83,22 @@
     #     that:
     #       - not check_if_changed.changed
 
-    - name: Please wait, Job is running...
-      wait_for:
-        delay: 20
-        timeout: 0
-      register: done
+    # - name: Please wait, Job is running...
+    #   wait_for:
+    #     delay: 20
+    #     timeout: 0
+    #   register: done
+
+    - name: Deploy FATE with kind, Please wait, Job is running...
+      block:
+        - name: Copy deployment script to target host
+          copy:
+            src: deploy.sh
+            dest: /tmp/deploy.sh
+            mode: 0755
+
+        - name: Running deployment script...
+          shell: /bin/bash /tmp/deploy.sh
 
     - name: Remove lock file lock_dir
       block:
