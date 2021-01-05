@@ -153,7 +153,7 @@ binary()
     exit 1
   fi
 
-  # check_cgroupfs
+  check_cgroupfs
   if [ $? -ne 0 ]; then
     echo "Fatal: cgroup is not suitable"
     exit 1
@@ -174,44 +174,100 @@ binary()
 
 clean()
 {
+  echo "Removing docker files..."
   rm -rf docker
   rm $docker_version.tgz
-  echo "Cleanning"
+
+  echo "Deleting kind cluster..." 
+  kind delete cluster --name kubefate
 }
 
 main()
 {
   clean
-  # Or Install the latest version of kubectl
-  # curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/bin/
+  # Check if docker is installed already
+  sudo docker ps
 
-  # Install Docker
-  # get_dist_name
-  # if [ $dist_name != "Unknown" ]; then
-  #   case $dist_name in
-  #     CentOS)
-  #       centos
-  #       ;;
-  #     Fedora)
-  #       fedora
-  #       ;;
-  #     Debian)
-  #       debian
-  #       ;;
-  #     Ubuntu)
-  #       ubuntu
-  #       ;;
-  #     *)
-  #       echo "Unsupported distribution name"
-  #   esac
-  # else
-  #   echo "Fatal: Unknown system version"
-  #   exit 1
-  # fi
-  binary
+  if [ $? == 0 ]; then
+    echo "Docker is installed on this host, no need to installed"
+  else
+    # Install the latest version of kubectl
+    # curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/bin/
+
+    # Install Docker with different linux distibutions
+    # get_dist_name
+    # if [ $dist_name != "Unknown" ]; then
+    #   case $dist_name in
+    #     CentOS)
+    #       centos
+    #       ;;
+    #     Fedora)
+    #       fedora
+    #       ;;
+    #     Debian)
+    #       debian
+    #       ;;
+    #     Ubuntu)
+    #       ubuntu
+    #       ;;
+    #     *)
+    #       echo "Unsupported distribution name"
+    #   esac
+    # else
+    #   echo "Fatal: Unknown system version"
+    #   exit 1
+    # fi
+
+    # Install Docker with binary file.
+    binary
+
+    # check if docker is installed correctly
+    sudo docker ps
+    if [ $? -ne == 0 ]; then
+      echo "Fatal: Docker is not installed correctly"
+      exit 1
+    fi
+    echo "Docker is installed on this host, no need to installed"
+  fi
 
   # Install Kind
   curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.9.0/kind-linux-amd64 && chmod +x ./kind && sudo mv ./kind /usr/bin/kind
+
+  # Create a cluster using kind
+  kind create cluster --name kubefate
+
+  # Download KubeFATE Release Pack, KubeFATE Server Image v1.2.0 and Install KubeFATE Command Lines
+  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-k8s-${version}.tar.gz && tar -xzf ./kubefate-k8s-${version}.tar.gz
+
+  # Move the kubefate executable binary to path,
+  sudo chmod +x ./kubefate && sudo mv ./kubefate /usr/bin
+
+  # Download the KubeFATE Server Image
+  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-${kubefate_version}.docker
+
+  # Load into local Docker
+  docker load < ./kubefate-v1.2.0.docker
+
+  # Create kube-fate namespace and account for KubeFATE service
+  kubectl apply -f ./rbac-config.yaml
+
+  # Because the Dockerhub latest limitation, I suggest using 163 Image Repository instead.
+  # sed 's/mariadb:10/hub.c.163.com\/federatedai\/mariadb:10/g' kubefate.yaml > kubefate_163.yaml
+  # sed 's/registry: ""/registry: "hub.c.163.com\/federatedai"/g' cluster.yaml > cluster_163.yaml
+
+  # Add kubefate.net to host file
+  sudo -- sh -c "echo \"192.168.100.123 kubefate.net\"  >> /etc/hosts"
+
+  # Check the commands above have been executed correctly
+  state=`kubefate version`
+  if [ $? -ne == 0 ]; then
+    echo "Fatal: There is something wrong with the installation of kubefate, please check"
+    exit 1
+  fi
+
+  # Install two fate parties: fate-9999 and fate-10000
+  kubectl create namespace fate-9999
+  kubectl create namespace fate-10000
 
   # Clean working directory
   clean
