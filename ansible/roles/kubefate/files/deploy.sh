@@ -3,7 +3,7 @@ version="v1.5.0"
 kubefate_version="v1.2.0"
 docker_version="docker-19.03.10"
 dist_name=""
-deploydir="/tmp/cicd"
+deploydir="${BASE_DIR}/cicd-${ANSIBLE_HOST}"
 
 # Get distribution
 get_dist_name()
@@ -107,7 +107,8 @@ clean()
   if [ -d $deploydir ]; then
     rm -rf $deploydir
   fi
-  rm /tmp/deploy.sh && rm /tmp/cicd.out
+  rm ${DEPLOY_SCRIPT} && rm ${OUT_PUT}
+  rm -rf ${BASE_DIR}/ansible*
 
   echo "Deleting kind cluster..." 
   kind delete cluster
@@ -136,12 +137,18 @@ cat <<EOF | kind create cluster --config=-
 EOF
 }
 
+trap 'onCtrlC' INT
+function onCtrlC () {
+  echo 'Ctrl+C is captured'
+  clean
+}
+
 main()
 {
   if [ -d $deploydir ]; then
     rm -rf $deploydir
   fi
-  mkdir -p $deploydir && mv /tmp/ingress.yaml $deploydir
+  mkdir -p $deploydir && mv ${INGRESS_FILE} $deploydir
   cd $deploydir
 
   curl_status=`curl --version`
@@ -200,8 +207,8 @@ main()
   kind load docker-image mariadb:10
 
   # Enable Ingress step 2.
-  sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ./ingress.yaml
-  kubectl apply -f ./ingress.yaml
+  sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ./ingress.yml
+  kubectl apply -f ./ingress.yml
 
   # Config Ingress
   time_out=120
@@ -229,7 +236,7 @@ main()
   --timeout=3600s
 
   # Reinstall Ingress
-  kubectl apply -f ./ingress.yaml
+  kubectl apply -f ./ingress.yml
 
   ip=`kubectl get nodes -o wide | sed -n "2p" | awk -F ' ' '{printf $6}'`
   kubefate_domain=`cat /etc/hosts | grep "kubefate.net"`

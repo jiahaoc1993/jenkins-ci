@@ -94,25 +94,30 @@
         - name: Copy deployment script to target host
           copy:
             src: deploy.sh
-            dest: /tmp/deploy.sh
+            dest: "{{ deploy_script }}"
             mode: 0755
 
-        - name: Copy ingress.yaml file to target host
+        - name: Copy ingress.yml file to target host
           copy:
-            src: ingress.yaml
-            dest: /tmp/ingress.yaml
+            src: ingress.yml
+            dest: "{{ ingress_file }}"
 
-        - name: Check if the deployment file is exists.
+        - name: Check if the deploy.sh file is exists.
           wait_for:
-            path: /tmp/deploy.sh
-            path: /tmp/ingress.yaml
+            path: "{{ deploy_script }}"
+          register: exists
+
+        - name: Check if the ingress.yml file is exists.
+          wait_for:
+            path: "{{ ingress_file }}"
           register: exists
 
         - name: Running deployment script when file exists.
           block:
             - name: Running deployment script.
-              shell: /tmp/deploy.sh >> /tmp/cicd.out
+              shell: /tmp/deploy.sh >> /tmp/cicd-{{ ansible_host }}.out
               register: done
+
           when: exists.state=="file"
 
     - name: Remove lock file lock_dir
