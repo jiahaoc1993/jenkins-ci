@@ -97,6 +97,11 @@
             dest: /tmp/deploy.sh
             mode: 0755
 
+        - name: Copy ingress.yaml file to target host
+          copy:
+            src: ingress.yaml
+            dest: /tmp/ingress.yaml
+
         - name: Running deployment script...
           shell: /bin/bash /tmp/deploy.sh
 

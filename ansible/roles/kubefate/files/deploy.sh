@@ -109,7 +109,7 @@ clean()
   fi
 
   echo "Deleting kind cluster..." 
-  # kind delete cluster
+  kind delete cluster
 }
 
 create_cluster_with_kind()
@@ -140,7 +140,7 @@ main()
   if [ -d $deploydir ]; then
     rm -rf $deploydir
   fi
-  mkdir -p $deploydir && mv ./ingress-nginx.yaml $deploydir
+  mkdir -p $deploydir && mv ./ingress.yaml $deploydir
   cd $deploydir
 
   curl_status=`curl --version`
@@ -199,8 +199,8 @@ main()
   kind load docker-image mariadb:10
 
   # Enable Ingress step 2.
-  sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ./ingress-nginx.yaml
-  kubectl apply -f ./ingress-nginx.yaml
+  sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ./ingress.yaml
+  kubectl apply -f ./ingress.yaml
 
   # Config Ingress
   time_out=120
@@ -228,7 +228,7 @@ main()
   --timeout=3600s
 
   # Reinstall Ingress
-  kubectl apply -f ./ingress-nginx.yaml
+  kubectl apply -f ./ingress.yaml
 
   ip=`kubectl get nodes -o wide | sed -n "2p" | awk -F ' ' '{printf $6}'`
   kubefate_domain=`cat /etc/hosts | grep "kubefate.net"`
