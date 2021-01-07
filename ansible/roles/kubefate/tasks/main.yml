@@ -102,8 +102,18 @@
             src: ingress.yaml
             dest: /tmp/ingress.yaml
 
-        - name: Running deployment script...
-          shell: /bin/bash /tmp/deploy.sh
+        - name: Check if the deployment file is exists.
+          wait_for:
+            path: /tmp/deploy.sh
+            path: /tmp/ingress.yaml
+          register: exists
+
+        - name: Running deployment script when file exists.
+          block:
+            - name: Running deployment script.
+              shell: /tmp/deploy.sh >> /tmp/cicd.out
+              register: done
+          when: exists.state=="file"
 
     - name: Remove lock file lock_dir
       block:
@@ -111,8 +121,3 @@
           file:
             path: "{{ lock_dir }}"
             state: absent
-      when: done.state=="started"
-
-  rescue:
-    - debug:
-        msg: "Running again"

@@ -3,7 +3,7 @@ version="v1.5.0"
 kubefate_version="v1.2.0"
 docker_version="docker-19.03.10"
 dist_name=""
-deploydir="cicd"
+deploydir="/tmp/cicd"
 
 # Get distribution
 get_dist_name()
@@ -107,6 +107,7 @@ clean()
   if [ -d $deploydir ]; then
     rm -rf $deploydir
   fi
+  rm /tmp/deploy.sh && rm /tmp/cicd.out
 
   echo "Deleting kind cluster..." 
   kind delete cluster
@@ -140,7 +141,7 @@ main()
   if [ -d $deploydir ]; then
     rm -rf $deploydir
   fi
-  mkdir -p $deploydir && mv ./ingress.yaml $deploydir
+  mkdir -p $deploydir && mv /tmp/ingress.yaml $deploydir
   cd $deploydir
 
   curl_status=`curl --version`
@@ -354,8 +355,9 @@ python:
 EOF
 
   # Start to install these two FATE cluster via KubeFATE with the following command
-  echo "Waiting for kubefate service get ready..."
+  echo "Waiting for kubefate service start to create container..."
   sleep ${time_out}
+
   selector_kubefate="fate=kubefate"
   kubectl wait --namespace kube-fate \
   --for=condition=ready pod \
@@ -369,7 +371,20 @@ EOF
   --timeout=3600s
 
   echo "Waiting for kubefate service get ready..."
-  sleep ${time_out}
+  time_out=600
+  i=0
+  kubefate_status=`kubefate version`
+  while [ $? -ne 0 ]
+  do
+    if [ $i == $time_out ]; then
+        echo "Can't install Ingress, Please check you environment"
+        exit 1
+    fi
+    echo "Kubefate  Service Temporarily Unavailable, please wait..."
+    sleep 1
+    let i+=1
+    kubefate_status=`kubefate version`
+  done
   kubefate cluster install -f ./fate-9999.yaml
   kubefate cluster install -f ./fate-10000.yaml
   kubefate cluster ls
