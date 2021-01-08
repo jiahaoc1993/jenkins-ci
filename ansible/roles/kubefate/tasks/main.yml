@@ -75,19 +75,36 @@
         state: directory
       register: check_if_changed
 
-    # - name: Check if the lock_dir needed to be recreated
-    #   debug:
-    #     msg: "CHECK This means some worker deleted the lock file: {{ check_if_changed.changed }}, increase the delay after remove lock file lock_dir above"
-    #   when: check_if_changed.changed
-    # - assert:
-    #     that:
-    #       - not check_if_changed.changed
+    - name: Deploy FATE with kind, Please wait, Job is running...
+      block:
+        - name: Copy deployment script to target host
+          copy:
+            src: deploy.sh
+            dest: "{{ deploy_script }}"
+            mode: 0755
 
-    - name: Please wait, Job is running...
-      wait_for:
-        delay: 20
-        timeout: 0
-      register: done
+        - name: Copy ingress.yml file to target host
+          copy:
+            src: ingress.yml
+            dest: "{{ ingress_file }}"
+
+        - name: Check if the deploy.sh file is exists.
+          wait_for:
+            path: "{{ deploy_script }}"
+          register: exists
+
+        - name: Check if the ingress.yml file is exists.
+          wait_for:
+            path: "{{ ingress_file }}"
+          register: exists
+
+        - name: Running deployment script when file exists.
+          block:
+            - name: Running deployment script.
+              shell: /tmp/deploy.sh >> /tmp/cicd-{{ ansible_host }}.out
+              register: done
+
+          when: exists.state=="file"
 
     - name: Remove lock file lock_dir
       block:
@@ -95,8 +112,3 @@
           file:
             path: "{{ lock_dir }}"
             state: absent
-      when: done.state=="started"
-
-  rescue:
-    - debug:
-        msg: "Running again"

@@ -2,3 +2,9 @@
 - hosts: all
   roles:
   - role: kubefate
+  environment:
+    BASE_DIR: "{{ base_dir }}"
+    ANSIBLE_HOST: "{{ ansible_host }}"
+    DEPLOY_SCRIPT: "{{ deploy_script }}"
+    INGRESS_FILE: "{{ ingress_file }}"
+    OUT_PUT: "{{ out_put }}"
