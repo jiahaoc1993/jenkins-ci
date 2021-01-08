@@ -27,6 +27,9 @@ EOF
 
 main() {
     cd $DEPLOY_DIR
+
+    create_cluster_with_kind
+
     docker pull jettech/kube-webhook-certgen:v1.5.0
     # federatedai/kubefate should build from source code
     docker pull federatedai/kubefate:${kubefate_version}
