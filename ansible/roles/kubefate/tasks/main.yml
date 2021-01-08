@@ -77,9 +77,10 @@
 
     - name: Initialize the Workplace for Further Job
       copy:
-        src: /
+        src: files/
         dest: "{{ base_dir }}"
         mode: 0755
+      ignore_errors: yes
 
     # leave a hook here for building kubefate image
     - name: Setup k8s cluster with kind

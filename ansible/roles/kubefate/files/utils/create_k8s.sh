@@ -118,3 +118,5 @@ main() {
         echo "${cluster_ip}    ingress-nginx-controller-admission" >>/etc/hosts
     fi
 }
+
+main
