@@ -1,6 +1,4 @@
-#/bin/bash
-
-source ~/.bash_profile
+#! /bin/bash
 if [ -z "$JOB_STATUS" ]; then
   echo "export JOB_STATUS=running" >> ~/.bash_profile
   exit 0

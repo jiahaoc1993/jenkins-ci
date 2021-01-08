@@ -1,9 +1,6 @@
 #! /bin/bash
-version="v1.5.0"
-kubefate_version="v1.2.0"
-docker_version="docker-19.03.10"
-dist_name=""
-deploydir="${BASE_DIR}/cicd-${ANSIBLE_HOST}"
+DIR=$(dirname $0)
+source ${DIR}/const.sh
 
 # Get distribution
 get_dist_name()
@@ -104,37 +101,14 @@ install_separately()
 
 clean()
 {
-  if [ -d $deploydir ]; then
-    rm -rf $deploydir
+  if [ -d $DEPLOY_DIR ]; then
+    rm -rf $DEPLOY_DIR
   fi
   rm ${DEPLOY_SCRIPT} && rm ${OUT_PUT}
   rm -rf ${BASE_DIR}/ansible*
 
   echo "Deleting kind cluster..." 
   kind delete cluster
-}
-
-create_cluster_with_kind()
-{
-cat <<EOF | kind create cluster --config=-
-    kind: Cluster
-    apiVersion: kind.x-k8s.io/v1alpha4
-    nodes:
-    - role: control-plane
-      kubeadmConfigPatches:
-      - |
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            node-labels: "ingress-ready=true"
-      extraPortMappings:
-      - containerPort: 80
-        hostPort: 80
-        protocol: TCP
-      - containerPort: 443
-        hostPort: 443
-        protocol: TCP
-EOF
 }
 
 trap 'onCtrlC' INT
@@ -145,116 +119,7 @@ function onCtrlC () {
 
 main()
 {
-  if [ -d $deploydir ]; then
-    rm -rf $deploydir
-  fi
-  mkdir -p $deploydir && mv ${INGRESS_FILE} $deploydir
-  cd $deploydir
-
-  curl_status=`curl --version`
-  if [ $? -ne 0 ]; then
-    echo "Fatal: Curl does not installed correctly"
-    exit 1
-  fi
-
-  # Check if kubectl is installed successfully
-  kubectl_status=`kubectl version --client`
-  if [ $? -eq 0 ]; then
-    echo "Kubectl is installed on this host, no need to install"
-  else
-    # Install the latest version of kubectl
-    curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && mv ./kubectl /usr/bin/
-    kubectl_status=`kubectl version --client`
-    if [ $? -ne 0 ]; then
-      echo "Fatal: Kubectl does not installed correctly"
-      exit 1
-    fi
-  fi
-
-  # Check if docker is installed already
-  docker_status=`docker ps`
-  if [ $? -eq 0 ]; then
-    echo "Docker is installed on this host, no need to install"
-  else
-    # Install Docker with different linux distibutions
-    install_separately
-
-    # check if docker is installed correctly
-    docker=`docker ps`
-    if [ $? -ne 0 ]; then
-      echo "Fatal: Docker does not installed correctly"
-      exit 1
-    fi
-  fi
-
-  # Install Kind
-  kind_status=`kind version`
-  if [ $? -eq 0 ]; then
-    echo "Kind is installed on this host, no need to install"
-  else
-    curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.9.0/kind-linux-amd64 && chmod +x ./kind && mv ./kind /usr/bin/kind
-  fi
-
-  # Create a cluster using kind with enable Ingress step 1.
-  create_cluster_with_kind
-
-  # Load images to kind cluster
-  docker pull jettech/kube-webhook-certgen:v1.5.0
-  docker pull federatedai/kubefate:${kubefate_version}
-  docker pull mariadb:10
-  kind load docker-image jettech/kube-webhook-certgen:v1.5.0
-  kind load docker-image federatedai/kubefate:${kubefate_version}
-  kind load docker-image mariadb:10
-
-  # Enable Ingress step 2.
-  sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ./ingress.yml
-  kubectl apply -f ./ingress.yml
-
-  # Config Ingress
-  time_out=120
-  i=0
-  cluster_ip=`kubectl get service -o wide -A | grep ingress-nginx-controller-admission | awk -F ' ' '{print $4}'`
-  while [ "$cluster_ip" == "" ]
-  do
-    if [ $i == $time_out ]; then
-        echo "Can't install Ingress, Please check you environment"
-        exit 1
-    fi
-
-    echo "Kind Ingress is not ready, Waiting for Ingress to get ready..."
-    cluster_ip=`kubectl get service -o wide -A | grep ingress-nginx-controller-admission | awk -F ' ' '{print $4}'`
-    sleep 1
-    let i+=1
-  done
-  echo "Got Ingress Cluster IP: " $cluster_ip
-  echo "Waiting for ${time_out} seconds util Ingress webhook get ready..."
-  sleep ${time_out}
-  selector="app.kubernetes.io/component=controller"
-  kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=${selector} \
-  --timeout=3600s
-
-  # Reinstall Ingress
-  kubectl apply -f ./ingress.yml
-
-  ip=`kubectl get nodes -o wide | sed -n "2p" | awk -F ' ' '{printf $6}'`
-  kubefate_domain=`cat /etc/hosts | grep "kubefate.net"`
-  if [ "$kubefate_domain" == "" ]; then
-    echo "${ip}    kubefate.net" >> /etc/hosts
-  else
-    sed -i "/kubefate.net/d" /etc/hosts
-    echo "${ip}    kubefate.net" >> /etc/hosts
-  fi
-    
-  ingress_nginx_controller_admission=`cat /etc/hosts | grep "ingress-nginx-controller-admission"`
-  if [ "$ingress_nginx_controller_admission" == "" ]; then
-    echo "${cluster_ip}    ingress-nginx-controller-admission" >> /etc/hosts
-  else
-    sed -i "/ingress-nginx-controller-admission/d" /etc/hosts
-    echo "${cluster_ip}    ingress-nginx-controller-admission" >> /etc/hosts
-  fi
-
+  cd $DEPLOY_DIR
   # Download KubeFATE Release Pack, KubeFATE Server Image v1.2.0 and Install KubeFATE Command Lines
   curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-k8s-${version}.tar.gz && tar -xzf ./kubefate-k8s-${version}.tar.gz
 

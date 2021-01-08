@@ -75,19 +75,15 @@
         state: directory
       register: check_if_changed
 
-    - name: Deploy FATE with kind, Please wait, Job is running...
+    - name: Initialize the Workplace for Further Job
+      copy:
+        src: /
+        dest: "{{ base_dir }}"
+        mode: 0755
+
+    # leave a hook here for building kubefate image
+    - name: Setup k8s cluster with kind
       block:
-        - name: Copy deployment script to target host
-          copy:
-            src: deploy.sh
-            dest: "{{ deploy_script }}"
-            mode: 0755
-
-        - name: Copy ingress.yml file to target host
-          copy:
-            src: ingress.yml
-            dest: "{{ ingress_file }}"
-
         - name: Check if the deploy.sh file is exists.
           wait_for:
             path: "{{ deploy_script }}"
@@ -98,6 +94,16 @@
             path: "{{ ingress_file }}"
           register: exists
 
+        - name: Check if the k8s creation script is exists.
+          wait_for:
+            path: "{{ base_dir }}/utils/create_k8s.sh"
+          register: exists
+
+        - name: Create k8s cluster
+          shell: "{{ base_dir }}/utils/create_k8s.sh >> /tmp/cicd-{{ ansible_host }}.out"
+
+    - name: Deploy FATE with kind, Please wait, Job is running...
+      block:
         - name: Running deployment script when file exists.
           block:
             - name: Running deployment script.
