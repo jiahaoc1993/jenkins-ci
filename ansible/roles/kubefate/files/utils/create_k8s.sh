@@ -74,8 +74,8 @@ main() {
     fi
 
     # Enable Ingress step 2.
-    sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ./ingress.yml
-    kubectl apply -f ./ingress.yml
+    sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ${DIR}/../ingress.yml
+    kubectl apply -f ${DIR}/../ingress.yml
 
     # Config Ingress
     time_out=120
