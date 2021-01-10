@@ -26,15 +26,14 @@ EOF
 }
 
 main() {
-    echo $KUBEFATE_VERSION
     cd $DEPLOY_DIR
 
     create_cluster_with_kind
 
-    docker pull jettech/kube-webhook-certgen:v1.5.0
+    docker pull ${DOCKER_REGISTRY}/jettech/kube-webhook-certgen:v1.5.0
     # federatedai/kubefate should build from source code
-    docker pull federatedai/kubefate:${KUBEFATE_VERSION}
-    docker pull mariadb:10
+    docker pull ${DOCKER_REGISTRY}/federatedai/kubefate:${KUBEFATE_VERSION}
+    docker pull ${DOCKER_REGISTRY}/mariadb:10
     kind load docker-image jettech/kube-webhook-certgen:v1.5.0
     kind load docker-image federatedai/kubefate:${KUBEFATE_VERSION}
     kind load docker-image mariadb:10
