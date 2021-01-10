@@ -20,6 +20,8 @@ fi
 
 set_cluster_image
 
+kubectl create namespace fate-9999
+
 if cluster_install; then
     loginfo "cluster install success"
 else
@@ -44,6 +46,8 @@ else
     exit 1
 fi
 loginfo "Cluster CURD test Success!"
+
+kubectl delete namespace fate-9999
 
 kubefate_uninstall
 
