@@ -208,12 +208,11 @@ main()
   kubectl apply -f ./ingress.yml
 
   # Config Ingress
-  time_out=120
   i=0
   cluster_ip=`kubectl get service -o wide -A | grep ingress-nginx-controller-admission | awk -F ' ' '{print $4}'`
   while [ "$cluster_ip" == "" ]
   do
-    if [ $i == $time_out ]; then
+    if [ $i == ${INGRESS_TIMEOUT} ]; then
         echo "Can't install Ingress, Please check you environment"
         exit 1
     fi
@@ -224,13 +223,13 @@ main()
     let i+=1
   done
   echo "Got Ingress Cluster IP: " $cluster_ip
-  echo "Waiting for ${time_out} seconds util Ingress webhook get ready..."
-  sleep ${time_out}
+  echo "Waiting for ${INGRESS_TIMEOUT} seconds util Ingress webhook get ready..."
+  sleep ${INGRESS_TIMEOUT}
   selector="app.kubernetes.io/component=controller"
   kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=${selector} \
-  --timeout=3600s
+  --timeout=${INGRESS_KUBEFATE_CLUSTER}s
 
   # Reinstall Ingress
   kubectl apply -f ./ingress.yml
@@ -361,27 +360,26 @@ EOF
 
   # Start to install these two FATE cluster via KubeFATE with the following command
   echo "Waiting for kubefate service start to create container..."
-  sleep ${time_out}
+  sleep ${KUBEFATE_SERVICE_TIMEOUT}
 
   selector_kubefate="fate=kubefate"
   kubectl wait --namespace kube-fate \
   --for=condition=ready pod \
   --selector=${selector_kubefate} \
-  --timeout=3600s
+  --timeout=${INGRESS_KUBEFATE_CLUSTER}s
 
   selector_mariadb="fate=mariadb"
   kubectl wait --namespace kube-fate \
   --for=condition=ready pod \
   --selector=${selector_mariadb} \
-  --timeout=3600s
+  --timeout=${INGRESS_KUBEFATE_CLUSTER}s
 
   echo "Waiting for kubefate service get ready..."
-  time_out=600
   i=0
   kubefate_status=`kubefate version`
   while [ $? -ne 0 ]
   do
-    if [ $i == $time_out ]; then
+    if [ $i == ${KUBEFATE_CLUSTER_TIMEOUT} ]; then
         echo "Can't install Ingress, Please check you environment"
         exit 1
     fi

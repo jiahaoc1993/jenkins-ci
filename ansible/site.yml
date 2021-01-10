@@ -8,3 +8,7 @@
     DEPLOY_SCRIPT: "{{ deploy_script }}"
     INGRESS_FILE: "{{ ingress_file }}"
     OUT_PUT: "{{ out_put }}"
+    INGRESS_TIMEOUT: 120
+    KUBEFATE_SERVICE_TIMEOUT: 120
+    KUBEFATE_CLUSTER_TIMEOUT: 600
+    INGRESS_KUBEFATE_CLUSTER: 3600
