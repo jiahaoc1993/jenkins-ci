@@ -136,14 +136,14 @@ main()
   kubectl apply -f ./rbac-config.yaml
   # kubectl apply -f ./kubefate.yaml
 
-  # Because the Dockerhub latest limitation, I suggest using 163 Image Repository instead.
+  # Replace the docker registry if it is not "docker.io"
   if [ "${DOCKER_REGISTRY}" != "docker.io"]; then
     sed -i "s/mariadb:10/${DOCKER_REGISTRY}\/federatedai\/mariadb:10/g" kubefate.yaml
     sed -i "s/registry: \"\"/registry: \"${DOCKER_REGISTRY}\/federatedai\"/g" cluster.yaml
   fi
   kubectl apply -f ./kubefate.yaml
 
-  # Check the commands above have been executed correctly
+  # Check if the commands above have been executed correctly
   state=`kubefate version`
   if [ $? -ne 0 ]; then
     echo "Fatal: There is something wrong with the installation of kubefate, please check"
