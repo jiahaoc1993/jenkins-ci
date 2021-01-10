@@ -19,7 +19,7 @@ get_dist_name()
   else
         dist_name='Unknown'
   fi
-  echo $DISTRO;
+  echo "dist_name: " $dist_name;
 }
 
 centos()
@@ -65,14 +65,14 @@ ubuntu()
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
-  add-apt-repository \
+  add-apt-repository -y \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable"
   apt-get update
   # apt-get install -y docker-ce docker-ce-cli containerd.io
-  version=`5:20.10.2~3-0~ubuntu-bionic`
-  apt-get install docker-ce=$version docker-ce-cli=$version containerd.io
+  version=`apt-cache madison docker-ce | awk 'NR==1' | awk -F ' ' '{print $3}'`
+  apt-get install -y docker-ce=$version docker-ce-cli=$version containerd.io
 }
 
 install_separately()
