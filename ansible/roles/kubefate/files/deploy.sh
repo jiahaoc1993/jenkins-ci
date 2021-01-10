@@ -43,36 +43,29 @@ fedora()
 debian()
 {
   apt-get remove docker docker-engine docker.io containerd runc
+  apt-get purge -y docker-ce docker-ce-cli containerd.io
+  rm -rf /var/lib/docker
   apt-get update
   apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
   curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
   add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
   apt-get update
   apt-get install -y docker-ce docker-ce-cli containerd.io
+  systemctl start docker.service
 }
 
 ubuntu()
 {
   apt-get remove docker docker-engine docker.io containerd runc
-  apt-get remove -y docker-ce docker-ce-cli
+  apt-get purge -y docker-ce docker-ce-cli containerd.io
+  rm -rf /var/lib/docker
   apt-get update
-  apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common
-
+  apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-  add-apt-repository -y \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
+  add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu \ $(lsb_release -cs) stable"
   apt-get update
-  # apt-get install -y docker-ce docker-ce-cli containerd.io
-  docker_version=`apt-cache madison docker-ce | awk 'NR==1' | awk -F ' ' '{print $3}'`
-  apt-get install -y docker-ce=$docker_version docker-ce-cli=$docker_version containerd.io
+  apt-get install -y docker-ce docker-ce-cli containerd.io
+  systemctl start docker.service
 }
 
 install_separately()
