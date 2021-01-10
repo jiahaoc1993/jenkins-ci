@@ -110,12 +110,8 @@
             - name: Running deployment script.
               shell: /tmp/deploy.sh >> /tmp/cicd-{{ ansible_host }}.out
               register: done
-              environment:
-                fate_version: {fate_version}
-                fate_serving_version: {fate_serving_version}
-                kubefate_version: {kubefate_version}
-
           when: exists.state=="file"
+
 
     - name: Remove lock file lock_dir
       block:
@@ -123,3 +119,8 @@
           file:
             path: "{{ lock_dir }}"
             state: absent
+
+  environment:
+    fate_version: {fate_version}
+    fate_serving_version: {fate_serving_version}
+    kubefate_version: {kubefate_version}
