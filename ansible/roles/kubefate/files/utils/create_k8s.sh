@@ -26,6 +26,7 @@ EOF
 }
 
 main() {
+    echo $KUBEFATE_VERSION
     cd $DEPLOY_DIR
 
     create_cluster_with_kind

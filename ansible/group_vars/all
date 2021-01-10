@@ -9,3 +9,4 @@ out_put: /tmp/cicd-{{ ansible_host }}.out
 fate_version: latest 
 fate_serving_version: latest 
 kubefate_version: latest
+docker_registry: docker.io

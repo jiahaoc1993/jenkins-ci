@@ -137,8 +137,8 @@ main()
   # kubectl apply -f ./kubefate.yaml
 
   # Because the Dockerhub latest limitation, I suggest using 163 Image Repository instead.
-  sed 's/mariadb:10/hub.c.163.com\/federatedai\/mariadb:10/g' kubefate.yaml > kubefate_163.yaml
-  sed 's/registry: ""/registry: "hub.c.163.com\/federatedai"/g' cluster.yaml > cluster_163.yaml
+  sed "s/mariadb:10/${DOCKER_REGISTRY}\/federatedai\/mariadb:10/g" kubefate.yaml > kubefate_163.yaml
+  sed "s/registry: \"\"/registry: "${DOCKER_REGISTRY}\/federatedai"/g" cluster.yaml > cluster_163.yaml
   kubectl apply -f ./kubefate_163.yaml
 
   # Check the commands above have been executed correctly
@@ -160,7 +160,7 @@ namespace: fate-9999
 chartName: fate
 chartVersion: v1.5.0
 partyId: 9999
-registry: "hub.c.163.com/federatedai"
+registry: "${DOCKER_REGISTRY}/federatedai"
 pullPolicy:
 persistence: false
 istio:
@@ -196,7 +196,7 @@ namespace: fate-10000
 chartName: fate
 chartVersion: v1.5.0
 partyId: 10000
-registry: "hub.c.163.com/federatedai"
+registry: "${DOCKER_REGISTRY}/federatedai"
 pullPolicy:
 persistence: false
 istio:

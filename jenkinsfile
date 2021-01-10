@@ -5,6 +5,7 @@ pipeline{
         string(name: 'fate_version', defaultValue: 'latest', description: 'Docker image tag for FATE')
         string(name: 'fate_serving_version', defaultValue: 'latest', description: 'Docker image tag for FATE Serving')
         string(name: 'kubefate_version', defaultValue: 'latest', description: 'Docker image tag for KubeFATE')
+        string(name: 'docker_registry', defaultValue: 'docker.io', description: 'Docker registry address')
     }
     stages{
         stage("Build"){
@@ -26,7 +27,8 @@ pipeline{
                     extraVars: [
                         fate_version: '${fate_version}',
                         fate_serving_version: '${fate_serving_version}',
-                        kubefate_version: '${kubefate_version}']
+                        kubefate_version: '${kubefate_version}',
+                        docker_registry: '${docker_registry}']
                 }
             }
         }

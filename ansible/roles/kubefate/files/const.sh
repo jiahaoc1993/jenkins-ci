@@ -12,6 +12,10 @@ if [ -z "${KUBEFATE_VERSION}" ]; then
     KUBEFATE_VERSION="latest"
 fi
 
-export docker_version="docker-19.03.10"
-export dist_name=""
-export DEPLOY_DIR="${BASE_DIR}/cicd-${ANSIBLE_HOST}"
+if [ -z "${DOCKER_REGISTRY}"]; then
+    DOCKER_REGISTRY="docker.io"
+fi
+
+docker_version="docker-19.03.10"
+dist_name=""
+DEPLOY_DIR="${BASE_DIR}/cicd-${ANSIBLE_HOST}"
