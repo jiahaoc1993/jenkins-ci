@@ -137,9 +137,11 @@ main()
   # kubectl apply -f ./kubefate.yaml
 
   # Because the Dockerhub latest limitation, I suggest using 163 Image Repository instead.
-  sed "s/mariadb:10/${DOCKER_REGISTRY}\/federatedai\/mariadb:10/g" kubefate.yaml > kubefate_163.yaml
-  sed "s/registry: \"\"/registry: "${DOCKER_REGISTRY}\/federatedai"/g" cluster.yaml > cluster_163.yaml
-  kubectl apply -f ./kubefate_163.yaml
+  if [ "${DOCKER_REGISTRY}" != "docker.io"]; then
+    sed -i "s/mariadb:10/${DOCKER_REGISTRY}\/federatedai\/mariadb:10/g" kubefate.yaml
+    sed -i "s/registry: \"\"/registry: \"${DOCKER_REGISTRY}\/federatedai\"/g" cluster.yaml
+  fi
+  kubectl apply -f ./kubefate.yaml
 
   # Check the commands above have been executed correctly
   state=`kubefate version`
