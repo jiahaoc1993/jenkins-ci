@@ -8,3 +8,6 @@
     DEPLOY_SCRIPT: "{{ deploy_script }}"
     INGRESS_FILE: "{{ ingress_file }}"
     OUT_PUT: "{{ out_put }}"
+    fate_version: "{{ fate_version }}"
+    fate_serving_version: "{{ fate_serving_version }}"
+    kubefate_version: "{{ kubefate_version }}"

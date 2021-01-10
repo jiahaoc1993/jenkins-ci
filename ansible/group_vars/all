@@ -6,3 +6,6 @@ base_dir: /tmp
 deploy_script: /tmp/deploy.sh
 ingress_file: /tmp/ingress.yml
 out_put: /tmp/cicd-{{ ansible_host }}.out
+fate_version: latest 
+fate_serving_version: latest 
+kubefate_version: latest
