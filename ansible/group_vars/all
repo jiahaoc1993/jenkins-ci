@@ -1,6 +1,6 @@
 job_status: running
 lock_dir: /tmp/ansible-playbook-{{ ansible_host }}.lock
-state_timeout: 10
+state_timeout: 7200
 wait_processes_rm_lock_file: 2
 base_dir: /tmp
 deploy_script: /tmp/deploy.sh
