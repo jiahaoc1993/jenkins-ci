@@ -32,10 +32,10 @@ main() {
 
     docker pull jettech/kube-webhook-certgen:v1.5.0
     # federatedai/kubefate should build from source code
-    docker pull federatedai/kubefate:${kubefate_version}
+    docker pull federatedai/kubefate:${KUBEFATE_VERSION}
     docker pull mariadb:10
     kind load docker-image jettech/kube-webhook-certgen:v1.5.0
-    kind load docker-image federatedai/kubefate:${kubefate_version}
+    kind load docker-image federatedai/kubefate:${KUBEFATE_VERSION}
     kind load docker-image mariadb:10
     curl_status=$(curl --version)
     if [ $? -ne 0 ]; then

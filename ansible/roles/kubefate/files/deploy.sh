@@ -121,13 +121,13 @@ main()
 {
   cd $DEPLOY_DIR
   # Download KubeFATE Release Pack, KubeFATE Server Image v1.2.0 and Install KubeFATE Command Lines
-  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-k8s-${version}.tar.gz && tar -xzf ./kubefate-k8s-${version}.tar.gz
+  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/v1.5.0/kubefate-k8s-v1.5.0.tar.gz && tar -xzf ./kubefate-k8s-v1.5.0.tar.gz
 
   # Move the kubefate executable binary to path,
   chmod +x ./kubefate && mv ./kubefate /usr/bin
 
   # Download the KubeFATE Server Image
-  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-${kubefate_version}.docker
+  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/v1.5.0/kubefate-${KUBEFATE_VERSION}.docker
 
   # Load into local Docker
   docker load < ./kubefate-v1.2.0.docker
