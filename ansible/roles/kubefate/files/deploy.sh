@@ -1,7 +1,6 @@
 #! /bin/bash
-version="v1.5.0"
-kubefate_version="v1.2.0"
-docker_version="docker-19.03.10"
+kubefate_version="v1.5.0"
+kubefate_image_version="v1.2.0"
 dist_name=""
 deploydir="${BASE_DIR}/cicd-${ANSIBLE_HOST}"
 
@@ -55,6 +54,7 @@ debian()
 ubuntu()
 {
   apt-get remove docker docker-engine docker.io containerd runc
+  apt-get remove -y docker-ce docker-ce-cli
   apt-get update
   apt-get install -y \
     apt-transport-https \
@@ -71,8 +71,8 @@ ubuntu()
    stable"
   apt-get update
   # apt-get install -y docker-ce docker-ce-cli containerd.io
-  version=`apt-cache madison docker-ce | awk 'NR==1' | awk -F ' ' '{print $3}'`
-  apt-get install -y docker-ce=$version docker-ce-cli=$version containerd.io
+  docker_version=`apt-cache madison docker-ce | awk 'NR==1' | awk -F ' ' '{print $3}'`
+  apt-get install -y docker-ce=$docker_version docker-ce-cli=$docker_version containerd.io
 }
 
 install_separately()
@@ -98,6 +98,7 @@ install_separately()
     esac
   else
     echo "Fatal: Unknown system version"
+    clean
     exit 1
   fi
 }
@@ -154,6 +155,7 @@ main()
   curl_status=`curl --version`
   if [ $? -ne 0 ]; then
     echo "Fatal: Curl does not installed correctly"
+    clean
     exit 1
   fi
 
@@ -167,6 +169,7 @@ main()
     kubectl_status=`kubectl version --client`
     if [ $? -ne 0 ]; then
       echo "Fatal: Kubectl does not installed correctly"
+      clean
       exit 1
     fi
   fi
@@ -183,6 +186,7 @@ main()
     docker=`docker ps`
     if [ $? -ne 0 ]; then
       echo "Fatal: Docker does not installed correctly"
+      clean
       exit 1
     fi
   fi
@@ -200,10 +204,10 @@ main()
 
   # Load images to kind cluster
   docker pull jettech/kube-webhook-certgen:v1.5.0
-  docker pull federatedai/kubefate:${kubefate_version}
+  docker pull federatedai/kubefate:${kubefate_image_version}
   docker pull mariadb:10
   kind load docker-image jettech/kube-webhook-certgen:v1.5.0
-  kind load docker-image federatedai/kubefate:${kubefate_version}
+  kind load docker-image federatedai/kubefate:${kubefate_image_version}
   kind load docker-image mariadb:10
 
   # Enable Ingress step 2.
@@ -256,13 +260,13 @@ main()
   fi
 
   # Download KubeFATE Release Pack, KubeFATE Server Image v1.2.0 and Install KubeFATE Command Lines
-  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-k8s-${version}.tar.gz && tar -xzf ./kubefate-k8s-${version}.tar.gz
+  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${kubefate_version}/kubefate-k8s-${kubefate_version}.tar.gz && tar -xzf ./kubefate-k8s-${kubefate_version}.tar.gz
 
   # Move the kubefate executable binary to path,
   chmod +x ./kubefate && mv ./kubefate /usr/bin
 
   # Download the KubeFATE Server Image
-  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${version}/kubefate-${kubefate_version}.docker
+  curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/${kubefate_version}/kubefate-${kubefate_image_version}.docker
 
   # Load into local Docker
   docker load < ./kubefate-v1.2.0.docker
@@ -280,6 +284,7 @@ main()
   state=`kubefate version`
   if [ $? -ne 0 ]; then
     echo "Fatal: There is something wrong with the installation of kubefate, please check"
+    clean
     exit 1
   fi
 
