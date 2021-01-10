@@ -24,9 +24,9 @@ pipeline{
                     playbook: 'ansible/site.yml',
                     disableHostKeyChecking: true,
                     extraVars: [
-                        fate_version: ${fate_version},
-                        fate_serving_version: ${fate_serving_version},
-                        kubefate_version: ${kubefate_version}]
+                        fate_version: '${fate_version}',
+                        fate_serving_version: '${fate_serving_version}',
+                        kubefate_version: '${kubefate_version}']
                 }
             }
         }
