@@ -16,7 +16,7 @@ get_dist_name()
   else
         dist_name='Unknown'
   fi
-  echo $DISTRO;
+  echo "dist_name: " $dist_name;
 }
 
 centos()
@@ -41,35 +41,32 @@ fedora()
 debian()
 {
   apt-get remove docker docker-engine docker.io containerd runc
+  apt-get purge -y docker-ce docker-ce-cli containerd.io
+  rm -rf /var/lib/docker
   apt-get update
   apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
   curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
   add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
   apt-get update
   apt-get install -y docker-ce docker-ce-cli containerd.io
+  apt-get install -y docker-ce docker-ce-cli containerd.io
+  systemctl start docker.service
 }
 
 ubuntu()
 {
   apt-get remove docker docker-engine docker.io containerd runc
+  apt-get purge -y docker-ce docker-ce-cli containerd.io
+  rm -rf /var/lib/docker
   apt-get update
-  apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common
+  apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
-  add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
+  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   apt-get update
-  # apt-get install -y docker-ce docker-ce-cli containerd.io
-  version=`5:20.10.2~3-0~ubuntu-bionic`
-  apt-get install docker-ce=$version docker-ce-cli=$version containerd.io
+  apt-get install -y docker-ce docker-ce-cli containerd.io
+  systemctl start docker.service
 }
 
 install_separately()
@@ -95,17 +92,14 @@ install_separately()
     esac
   else
     echo "Fatal: Unknown system version"
+    clean
     exit 1
   fi
 }
 
 clean()
 {
-  if [ -d $DEPLOY_DIR ]; then
-    rm -rf $DEPLOY_DIR
-  fi
-  rm ${DEPLOY_SCRIPT} && rm ${OUT_PUT}
-  rm -rf ${BASE_DIR}/ansible*
+  rm -rf ${BASE_DIR}/*
 
   echo "Deleting kind cluster..." 
   kind delete cluster
@@ -119,7 +113,7 @@ function onCtrlC () {
 
 main()
 {
-  cd $DEPLOY_DIR
+  cd ${BASE_DIR}
   # Download KubeFATE Release Pack, KubeFATE Server Image v1.2.0 and Install KubeFATE Command Lines
   curl -LO https://github.com/FederatedAI/KubeFATE/releases/download/v1.5.0/kubefate-k8s-v1.5.0.tar.gz && tar -xzf ./kubefate-k8s-v1.5.0.tar.gz
 
@@ -147,6 +141,7 @@ main()
   state=`kubefate version`
   if [ $? -ne 0 ]; then
     echo "Fatal: There is something wrong with the installation of kubefate, please check"
+    clean
     exit 1
   fi
 
@@ -230,27 +225,26 @@ EOF
 
   # Start to install these two FATE cluster via KubeFATE with the following command
   echo "Waiting for kubefate service start to create container..."
-  sleep ${time_out}
+  sleep ${KUBEFATE_SERVICE_TIMEOUT}
 
   selector_kubefate="fate=kubefate"
   kubectl wait --namespace kube-fate \
   --for=condition=ready pod \
   --selector=${selector_kubefate} \
-  --timeout=3600s
+  --timeout=${INGRESS_KUBEFATE_CLUSTER}s
 
   selector_mariadb="fate=mariadb"
   kubectl wait --namespace kube-fate \
   --for=condition=ready pod \
   --selector=${selector_mariadb} \
-  --timeout=3600s
+  --timeout=${INGRESS_KUBEFATE_CLUSTER}s
 
   echo "Waiting for kubefate service get ready..."
-  time_out=600
   i=0
   kubefate_status=`kubefate version`
   while [ $? -ne 0 ]
   do
-    if [ $i == $time_out ]; then
+    if [ $i == ${KUBEFATE_CLUSTER_TIMEOUT} ]; then
         echo "Can't install Ingress, Please check you environment"
         exit 1
     fi

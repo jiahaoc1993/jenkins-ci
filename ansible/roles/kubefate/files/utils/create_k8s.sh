@@ -26,7 +26,7 @@ EOF
 }
 
 main() {
-    cd $DEPLOY_DIR
+    cd ${BASE_DIR}
 
     create_cluster_with_kind
 
@@ -40,6 +40,7 @@ main() {
     curl_status=$(curl --version)
     if [ $? -ne 0 ]; then
         echo "Fatal: Curl does not installed correctly"
+        clean
         exit 1
     fi
 
@@ -53,6 +54,7 @@ main() {
         kubectl_status=$(kubectl version --client)
         if [ $? -ne 0 ]; then
             echo "Fatal: Kubectl does not installed correctly"
+            clean
             exit 1
         fi
     fi
@@ -69,20 +71,20 @@ main() {
         docker=$(docker ps)
         if [ $? -ne 0 ]; then
             echo "Fatal: Docker does not installed correctly"
+            clean
             exit 1
         fi
     fi
 
     # Enable Ingress step 2.
-    sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ${DIR}/../ingress.yml
-    kubectl apply -f ${DIR}/../ingress.yml
+    sed -i "s#- --publish-status-address=localhost#- --publish-status-address=${ip}#g" ${INGRESS_FILE}
+    kubectl apply -f ${INGRESS_FILE}
 
     # Config Ingress
-    time_out=120
     i=0
     cluster_ip=$(kubectl get service -o wide -A | grep ingress-nginx-controller-admission | awk -F ' ' '{print $4}')
     while [ "$cluster_ip" == "" ]; do
-        if [ $i == $time_out ]; then
+        if [ $i == ${INGRESS_TIMEOUT} ]; then
             echo "Can't install Ingress, Please check you environment"
             exit 1
         fi
@@ -93,16 +95,16 @@ main() {
         let i+=1
     done
     echo "Got Ingress Cluster IP: " $cluster_ip
-    echo "Waiting for ${time_out} seconds util Ingress webhook get ready..."
-    sleep ${time_out}
+    echo "Waiting for ${INGRESS_TIMEOUT} seconds util Ingress webhook get ready..."
+    sleep ${INGRESS_TIMEOUT}
     selector="app.kubernetes.io/component=controller"
     kubectl wait --namespace ingress-nginx \
         --for=condition=ready pod \
         --selector=${selector} \
-        --timeout=3600s
+        --timeout=${INGRESS_KUBEFATE_CLUSTER}s
 
     # Reinstall Ingress
-    kubectl apply -f ./ingress.yml
+    kubectl apply -f ${INGRESS_FILE}
 
     ip=$(kubectl get nodes -o wide | sed -n "2p" | awk -F ' ' '{printf $6}')
     kubefate_domain=$(cat /etc/hosts | grep "kubefate.net")
