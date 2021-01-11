@@ -12,7 +12,7 @@ if [ -z "${KUBEFATE_VERSION}" ]; then
     KUBEFATE_VERSION="latest"
 fi
 
-if [ -z "${DOCKER_REGISTRY}"]; then
+if [ -z "${DOCKER_REGISTRY}" ]; then
     DOCKER_REGISTRY="docker.io"
 fi
 
