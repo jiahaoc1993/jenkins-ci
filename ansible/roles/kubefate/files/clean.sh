@@ -1,14 +1,18 @@
 #/bin/bash
 
-CHECK_STATUS_SCRIPT="/tmp/check_status.sh"
-CLEAN_SCRIPT="/tmp/clean.sh"
+clean_when_timeout()
+{
+  rm -rf ${BASE_DIR}/*
 
-sed -i '/JOB_STATUS/d' ~/.bash_profile
+  # Install Kind
+  kind_status=`kind version`
+  if [ $? -eq 0 ]; then
+    echo "Deleting kind cluster..." 
+    kind delete cluster
+  fi
 
-if [ -f $CHECK_STATUS_SCRIPT ]; then
-    rm $CHECK_STATUS_SCRIPT
-fi
+  echo "exit because of task timeout"
+  exit 1
+}
 
-if [ -f $CLEAN_SCRIPT ]; then
-    rm $CLEAN_SCRIPT
-fi
+clean_when_timeout

@@ -101,15 +101,30 @@
           register: exists
 
         - name: Create k8s cluster
+          async: "{{ kube_create_timeout }}"
+          poll: "{{ check_interval }}"
           shell: "{{ base_dir }}/utils/create_k8s.sh >> /tmp/cicd-{{ ansible_host }}.out"
+          register: k8s_status
+          ignore_errors: true
+
+        - name: Clean
+          shell: "{{ base_dir }}/clean.sh"
+          when: k8s_status.changed==false
 
     - name: Deploy FATE with kind, Please wait, Job is running...
       block:
         - name: Running deployment script when file exists.
           block:
             - name: Running deployment script.
+              async: "{{ fate_create_timeout }}"
+              poll: "{{ check_interval }}"
               shell: "{{ base_dir }}/deploy.sh >> /tmp/cicd-{{ ansible_host }}.out"
-              register: done
+              register: fate_status
+              ignore_errors: true
+
+            - name: Clean
+              shell: "{{ base_dir }}/clean.sh"
+              when: fate_status.changed==false
           when: exists.state=="file"
 
     - name: Remove lock file lock_dir
