@@ -104,12 +104,12 @@
           async: "{{ kube_create_timeout }}"
           poll: "{{ check_interval }}"
           shell: "{{ base_dir }}/utils/create_k8s.sh >> /tmp/cicd-{{ ansible_host }}.out"
-          register: kube_status
+          register: k8s_status
           ignore_errors: true
 
         - name: Clean
-          shell: /tmp/clean.sh
-          when: kube_status.changed==false
+          shell: "{{ base_dir }}/clean.sh"
+          when: k8s_status.changed==false
 
     - name: Deploy FATE with kind, Please wait, Job is running...
       block:
@@ -123,7 +123,7 @@
               ignore_errors: true
 
             - name: Clean
-              shell: /tmp/clean.sh
+              shell: "{{ base_dir }}/clean.sh"
               when: fate_status.changed==false
           when: exists.state=="file"
 
