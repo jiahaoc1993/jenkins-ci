@@ -10,6 +10,6 @@ fate_version: latest
 fate_serving_version: latest 
 kubefate_version: latest
 docker_registry: docker.io
-kube_create_timeout: 2700
+kube_create_timeout: 1800
 check_interval: 90
-fate_create_timeout: 1800
+fate_create_timeout: 2700

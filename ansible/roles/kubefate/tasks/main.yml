@@ -108,8 +108,8 @@
           ignore_errors: true
 
         - name: Clean
-          shell: /tmp/cleanup.sh
-          when: kube_status.changed=false
+          shell: /tmp/clean.sh
+          when: kube_status.changed==false
 
     - name: Deploy FATE with kind, Please wait, Job is running...
       block:
@@ -123,7 +123,7 @@
               ignore_errors: true
 
             - name: Clean
-              shell: /tmp/cleanup.sh
+              shell: /tmp/clean.sh
               when: fate_status.changed==false
           when: exists.state=="file"
 
